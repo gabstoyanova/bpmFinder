@@ -30,17 +30,17 @@ public class TrackController {
   AudioAnalysisService audioAnalysisService;
 
   @GetMapping("/{trackId}")
-  public Track getTrack(@PathVariable String trackId) throws IOException, ParseException, SpotifyWebApiException {
+  public Track getTrack(@PathVariable String trackId) {
     return trackService.getTrack(trackId);
   }
 
   @GetMapping("/{trackId}/audioAnalysis")
-  public AudioAnalysis getTrackAnalysis(@PathVariable String trackId) throws IOException, ParseException, SpotifyWebApiException {
+  public AudioAnalysis getTrackAnalysis(@PathVariable String trackId) {
     return audioAnalysisService.getTrackAnalysis(trackId);
   }
 
   @GetMapping("/{trackId}/audioFeatures")
-  public AudioFeatures getTrackAudioFeatures(@PathVariable String trackId) throws IOException, ParseException, SpotifyWebApiException {
+  public AudioFeatures getTrackAudioFeatures(@PathVariable String trackId) {
     return audioAnalysisService.getTrackAudioFeatures(trackId);
   }
 }
