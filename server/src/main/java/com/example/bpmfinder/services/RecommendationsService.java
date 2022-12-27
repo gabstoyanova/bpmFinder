@@ -30,20 +30,27 @@ public class RecommendationsService {
     GetRecommendationsRequest getRecommendationsRequest = spotifyService.getSpotifyApi().getRecommendations()
       .limit(10)
       .seed_tracks(trackId)
+
+//      set the target bpm with a buffer of +- 2 beats
       .target_tempo(audioFeatures.getTempo())
-      .min_acousticness((float) (audioFeatures.getAcousticness() - 0.1))
-      .max_acousticness((float) (audioFeatures.getAcousticness() + 0.1))
-//      todo: decide which parameters i am going to match by
-//      .target_danceability(audioFeatures.getDanceability())
-//      .seed_genres(String.join(",", genreIds))
-      .min_popularity(20)
+      .min_tempo(audioFeatures.getTempo() - 2)
+      .max_tempo(audioFeatures.getTempo() + 2)
+      .min_energy((float) (audioFeatures.getEnergy() - 0.2))
+      .max_energy((float) (audioFeatures.getEnergy() + 0.2))
+
+//      we want the tracks with the same time signature as the seed track, otherwise even tracks with the same bpm will feel different in terms of beat
+      .target_time_signature(audioFeatures.getTimeSignature())
+      .min_time_signature(audioFeatures.getTimeSignature())
+      .max_time_signature(audioFeatures.getTimeSignature())
+
+      .min_popularity(40)
       .build();
 
     Recommendations recommendations = executeGetRecommendationsRequest(getRecommendationsRequest);
     return constructRecommendationResults(recommendations);
   }
 
-  public Recommendations executeGetRecommendationsRequest(GetRecommendationsRequest getRecommendationsRequest) {
+  private Recommendations executeGetRecommendationsRequest(GetRecommendationsRequest getRecommendationsRequest) {
     Recommendations recommendations = null;
     try {
       recommendations = getRecommendationsRequest.execute();

@@ -10,14 +10,12 @@ public class RecommendationResult {
   private final String trackName;
   private final String spotifyUrl;
 
-  private Float acousticness;
-  private Float danceability;
-  private Float energy;
-  private Float instrumentalness;
-  private Integer key;
-  private Float liveness;
-  private Float loudness;
-  private Float tempo;
+  private float acousticness;
+  private float danceability;
+  private float energy;
+  private float instrumentalness;
+  private float tempo;
+  private int timeSignature;
 
   public RecommendationResult(TrackSimplified track) {
     this.trackName = track.getName();
@@ -29,10 +27,8 @@ public class RecommendationResult {
     this.danceability = audioFeatures.getDanceability();
     this.energy = audioFeatures.getEnergy();
     this.instrumentalness = audioFeatures.getInstrumentalness();
-    this.key = audioFeatures.getKey();
-    this.liveness = audioFeatures.getLiveness();
-    this.loudness = audioFeatures.getLoudness();
     this.tempo = audioFeatures.getTempo();
+    this.timeSignature = audioFeatures.getTimeSignature();
   }
 
 }
