@@ -6,6 +6,7 @@ import com.example.bpmfinder.services.RecommendationsService;
 import com.example.bpmfinder.services.SpotifyService;
 import com.example.bpmfinder.services.TrackService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/track")
+@CrossOrigin("http://localhost:3000")
 public class TrackController {
 
   @Autowired
