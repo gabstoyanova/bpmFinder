@@ -1,5 +1,6 @@
 package com.example.bpmfinder.services;
 
+import com.example.bpmfinder.exceptions.SpotifyApiException;
 import com.example.bpmfinder.models.RecommendationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,14 +19,14 @@ public class RecommendationsService {
   SpotifyService spotifyService;
 
   @Autowired
-  AudioAnalysisService audioAnalysisService;
+  TrackService trackService;
 
   /**
    * Get recommendations by a seed track id
    * todo: idea: if (authenticated user) search in user's playlists for tracks with the same characteristics and prioritize them
    */
-  public List<RecommendationResult> getRecommendationsByTrackId(String trackId) {
-    AudioFeatures audioFeatures = audioAnalysisService.getTrackAudioFeatures(trackId);
+  public List<RecommendationResult> getRecommendationsByTrackId(String trackId) throws SpotifyApiException {
+    AudioFeatures audioFeatures = trackService.getTrackAudioFeatures(trackId);
 
     GetRecommendationsRequest getRecommendationsRequest = spotifyService.getSpotifyApi().getRecommendations()
       .limit(10)
@@ -46,26 +47,16 @@ public class RecommendationsService {
       .min_popularity(40)
       .build();
 
-    Recommendations recommendations = executeGetRecommendationsRequest(getRecommendationsRequest);
+    Recommendations recommendations = spotifyService.executeRequest(getRecommendationsRequest);
     return constructRecommendationResults(recommendations);
   }
 
-  private Recommendations executeGetRecommendationsRequest(GetRecommendationsRequest getRecommendationsRequest) {
-    Recommendations recommendations = null;
-    try {
-      recommendations = getRecommendationsRequest.execute();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return recommendations;
-  }
-
-  private List<RecommendationResult> constructRecommendationResults(Recommendations recommendations) {
+  private List<RecommendationResult> constructRecommendationResults(Recommendations recommendations) throws SpotifyApiException {
     List<RecommendationResult> recommendationResults = new ArrayList<>();
 
     for (TrackSimplified track : recommendations.getTracks()) {
       RecommendationResult recommendationResult = new RecommendationResult(track);
-      recommendationResult.setAudioFeatureAttributes(audioAnalysisService.getTrackAudioFeatures(track.getId()));
+      recommendationResult.setAudioFeatureAttributes(trackService.getTrackAudioFeatures(track.getId()));
       recommendationResults.add(recommendationResult);
     }
     return recommendationResults;

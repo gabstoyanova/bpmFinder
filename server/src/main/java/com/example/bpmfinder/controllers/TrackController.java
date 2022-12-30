@@ -1,7 +1,7 @@
 package com.example.bpmfinder.controllers;
 
+import com.example.bpmfinder.exceptions.SpotifyApiException;
 import com.example.bpmfinder.models.RecommendationResult;
-import com.example.bpmfinder.services.AudioAnalysisService;
 import com.example.bpmfinder.services.RecommendationsService;
 import com.example.bpmfinder.services.SpotifyService;
 import com.example.bpmfinder.services.TrackService;
@@ -29,29 +29,26 @@ public class TrackController {
   TrackService trackService;
 
   @Autowired
-  AudioAnalysisService audioAnalysisService;
-
-  @Autowired
   RecommendationsService recommendationsService;
 
   @GetMapping("/{trackId}")
-  public Track getTrack(@PathVariable String trackId) {
+  public Track getTrack(@PathVariable String trackId) throws SpotifyApiException {
     return trackService.getTrack(trackId);
   }
 
   @GetMapping("/{trackId}/audioAnalysis")
-  public AudioAnalysis getTrackAnalysis(@PathVariable String trackId) {
-    return audioAnalysisService.getTrackAnalysis(trackId);
+  public AudioAnalysis getTrackAnalysis(@PathVariable String trackId) throws SpotifyApiException {
+    return trackService.getTrackAnalysis(trackId);
   }
 
   @GetMapping("/{trackId}/audioFeatures")
-  public AudioFeatures getTrackAudioFeatures(@PathVariable String trackId) {
-    return audioAnalysisService.getTrackAudioFeatures(trackId);
+  public AudioFeatures getTrackAudioFeatures(@PathVariable String trackId) throws SpotifyApiException {
+    return trackService.getTrackAudioFeatures(trackId);
   }
 
-//  todo: idea: pass the desired count of recommendations (could be in range 1 - 100) as a query param
+  //  todo: idea: pass the desired count of recommendations (could be in range 1 - 100) as a query param
   @GetMapping("/{trackId}/recommendations")
-  public List<RecommendationResult> getRecommendationsByTrack(@PathVariable String trackId) {
+  public List<RecommendationResult> getRecommendationsByTrack(@PathVariable String trackId) throws SpotifyApiException {
     return recommendationsService.getRecommendationsByTrackId(trackId);
   }
 }

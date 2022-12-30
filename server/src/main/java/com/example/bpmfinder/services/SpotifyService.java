@@ -1,5 +1,6 @@
 package com.example.bpmfinder.services;
 
+import com.example.bpmfinder.exceptions.SpotifyApiException;
 import org.apache.hc.core5.http.ParseException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import se.michaelthelin.spotify.model_objects.specification.User;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
+import se.michaelthelin.spotify.requests.data.AbstractDataRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistRequest;
 import se.michaelthelin.spotify.requests.data.users_profile.GetCurrentUsersProfileRequest;
 
@@ -51,6 +53,17 @@ public class SpotifyService {
 
   public SpotifyApi getSpotifyApi() {
     return this.spotifyApi;
+  }
+
+  public <T> T executeRequest(AbstractDataRequest<T> request) throws SpotifyApiException {
+    T object;
+    try {
+      object = request.execute();
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new SpotifyApiException(e.getMessage());
+    }
+    return object;
   }
 
   public void clientCredentials_Sync() {
@@ -95,31 +108,18 @@ public class SpotifyService {
     return uri.toString();
   }
 
-
-
+  public User getCurrentUsersProfile_Sync() throws SpotifyApiException {
+    GetCurrentUsersProfileRequest getCurrentUsersProfileRequest = spotifyApi.getCurrentUsersProfile().build();
+    return executeRequest(getCurrentUsersProfileRequest);
+  }
 
 
 
   // i can leave the auth methods here 💡. Work with components can be moved to services of their own,
   // the below methods are just me playing around with the api for now
-  public Playlist getPlaylist(String playlistId) throws IOException, ParseException, SpotifyWebApiException {
+  public Playlist getPlaylist(String playlistId) throws SpotifyApiException {
     GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
-    final Playlist playlist = getPlaylistRequest.execute();
-    System.out.println("Name: " + playlist.getName());
-    return playlist;
-  }
-
-  public User getCurrentUsersProfile_Sync() {
-    User user = null;
-    try {
-      GetCurrentUsersProfileRequest getCurrentUsersProfileRequest = spotifyApi.getCurrentUsersProfile().build();
-      user = getCurrentUsersProfileRequest.execute();
-      System.out.println("Display name: " + user.getDisplayName());
-    } catch (IOException | SpotifyWebApiException | ParseException e) {
-      System.out.println("Error: " + e.getMessage());
-      e.printStackTrace();
-    }
-    return user;
+    return executeRequest(getPlaylistRequest);
   }
 
 }
