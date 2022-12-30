@@ -36,3 +36,25 @@
     transform: rotate(360deg);
   }
 }
+
+
+/* todo make it pretty */
+
+.SearchButton {
+  font-size: 15px;
+  text-align: center;
+  background-color: darkseagreen;
+  border-radius: 15px;
+  padding: 10px;
+  margin: 10px;
+}
+
+.search {
+  width: 100%;
+  margin-bottom: 50px;
+  padding: 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 20px;
+  background-color: darkseagreen;
+}

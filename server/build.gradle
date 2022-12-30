@@ -1,10 +1,12 @@
 plugins {
   id 'java'
-  id 'org.springframework.boot' version '3.0.1'
-  id 'io.spring.dependency-management' version '1.1.0'
+  id 'org.springframework.boot' version '2.6.4'
+  id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 }
 
-sourceCompatibility = '17'
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
 
 dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
