@@ -21,6 +21,8 @@ import se.michaelthelin.spotify.requests.data.users_profile.GetCurrentUsersProfi
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class SpotifyService {
@@ -36,6 +38,10 @@ public class SpotifyService {
 
   private SpotifyApi spotifyApi;
 
+  private static final long TIMEOUT = 3600;
+
+  private LocalDateTime lastClientAuth;
+
   private String code = "";
 
   @PostConstruct
@@ -48,10 +54,13 @@ public class SpotifyService {
       .setRedirectUri(redirectUri)
       .build();
 
-    clientCredentials_Sync();
+    retrieveClientCredentials();
   }
 
   public SpotifyApi getSpotifyApi() {
+    if (!isAuthorized()) {
+      retrieveClientCredentials();
+    }
     return this.spotifyApi;
   }
 
@@ -66,13 +75,17 @@ public class SpotifyService {
     return object;
   }
 
-  public void clientCredentials_Sync() {
+  /**
+   * Access tokens are valid for 1 hour.
+   */
+  public void retrieveClientCredentials() {
     try {
       final ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials().build();
       final ClientCredentials clientCredentials = clientCredentialsRequest.execute();
 
       // Set access token for further "spotifyApi" object usage
       spotifyApi.setAccessToken(clientCredentials.getAccessToken());
+      this.lastClientAuth = LocalDateTime.now();
 
       System.out.println("Expires in: " + clientCredentials.getExpiresIn());
     } catch (IOException | SpotifyWebApiException | ParseException e) {
@@ -90,11 +103,18 @@ public class SpotifyService {
       spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
       spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
 
-      System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
-    } catch (IOException | SpotifyWebApiException | ParseException e) {
-      System.out.println("Error: " + e.getMessage());
-    }
 
+  /**
+   * Check if the credentials are fit to make a request.
+   * @return True if a request can safely be made using the current credentials.
+   */
+  public boolean isAuthorized() {
+    System.out.println(this.clientId + " " + this.clientSecret + " " + this.isClientAccessTokenValid());
+    return this.clientSecret != null && this.clientId != null && isClientAccessTokenValid();
+  }
+
+  private boolean isClientAccessTokenValid() {
+    return (LocalDateTime.now().minus(TIMEOUT, ChronoUnit.SECONDS)).isBefore(this.lastClientAuth);
   }
 
   public String authorizationCodeUri_Sync() {
