@@ -1,6 +1,7 @@
 package com.example.bpmfinder.services;
 
 import com.example.bpmfinder.exceptions.SpotifyApiException;
+import lombok.Getter;
 import org.apache.hc.core5.http.ParseException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -9,13 +10,11 @@ import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
-import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.User;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
 import se.michaelthelin.spotify.requests.data.AbstractDataRequest;
-import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistRequest;
 import se.michaelthelin.spotify.requests.data.users_profile.GetCurrentUsersProfileRequest;
 
 import javax.annotation.PostConstruct;
@@ -24,9 +23,13 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+import static se.michaelthelin.spotify.enums.AuthorizationScope.PLAYLIST_MODIFY_PRIVATE;
+import static se.michaelthelin.spotify.enums.AuthorizationScope.PLAYLIST_MODIFY_PUBLIC;
+
 @Service
 public class SpotifyService {
 
+  // callback should go to the previous page in fe
   @Value("${spotify.redirectUriString}")
   private String redirectUriString;
 
@@ -42,7 +45,10 @@ public class SpotifyService {
 
   private LocalDateTime lastClientAuth;
 
-  private String code = "";
+  private String userAuthorizationCode = "";
+
+  @Getter
+  private String loggedInUserId = "";
 
   @PostConstruct
   public void postConstruct() {
@@ -58,7 +64,7 @@ public class SpotifyService {
   }
 
   public SpotifyApi getSpotifyApi() {
-    if (!isAuthorized()) {
+    if (!isClientAccessTokenValid()) {
       retrieveClientCredentials();
     }
     return this.spotifyApi;
@@ -93,34 +99,40 @@ public class SpotifyService {
     }
   }
 
-  public void authorizationCode_Sync(String userCode) {
-    code = userCode;
+  public void setUserAuthorizationCode(String code) {
+    userAuthorizationCode = code;
+    assert (this.userAuthorizationCode != null && !this.userAuthorizationCode.equals(""));
     try {
-      final AuthorizationCodeRequest authorizationCodeRequest = spotifyApi.authorizationCode(code).build();
+      final AuthorizationCodeRequest authorizationCodeRequest = spotifyApi.authorizationCode(userAuthorizationCode).build();
       final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeRequest.execute();
 
       // Set access and refresh token for further "spotifyApi" object usage
       spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
       spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
 
+      loggedInUserId = getCurrentUsersProfile().getId();
+
+      System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
+    } catch (Exception e) {
+      System.out.println("Error: " + e.getMessage());
+    }
+  }
+
 
   /**
    * Check if the credentials are fit to make a request.
    * @return True if a request can safely be made using the current credentials.
    */
-  public boolean isAuthorized() {
-    System.out.println(this.clientId + " " + this.clientSecret + " " + this.isClientAccessTokenValid());
-    return this.clientSecret != null && this.clientId != null && isClientAccessTokenValid();
-  }
-
   private boolean isClientAccessTokenValid() {
-    return (LocalDateTime.now().minus(TIMEOUT, ChronoUnit.SECONDS)).isBefore(this.lastClientAuth);
+    return this.clientSecret != null &&
+      this.clientId != null &&
+      (LocalDateTime.now().minus(TIMEOUT, ChronoUnit.SECONDS)).isBefore(this.lastClientAuth);
   }
 
-  public String authorizationCodeUri_Sync() {
+  public String getUserAuthorizationCodeUri() {
     AuthorizationCodeUriRequest authorizationCodeUriRequest = spotifyApi.authorizationCodeUri()
-//          .scope("user-read-email")
-          .show_dialog(true)
+      .show_dialog(true)
+      .scope(PLAYLIST_MODIFY_PRIVATE, PLAYLIST_MODIFY_PUBLIC)
       .build();
     final URI uri = authorizationCodeUriRequest.execute();
 
@@ -128,18 +140,9 @@ public class SpotifyService {
     return uri.toString();
   }
 
-  public User getCurrentUsersProfile_Sync() throws SpotifyApiException {
+  public User getCurrentUsersProfile() throws SpotifyApiException {
     GetCurrentUsersProfileRequest getCurrentUsersProfileRequest = spotifyApi.getCurrentUsersProfile().build();
     return executeRequest(getCurrentUsersProfileRequest);
-  }
-
-
-
-  // i can leave the auth methods here 💡. Work with components can be moved to services of their own,
-  // the below methods are just me playing around with the api for now
-  public Playlist getPlaylist(String playlistId) throws SpotifyApiException {
-    GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
-    return executeRequest(getPlaylistRequest);
   }
 
 }

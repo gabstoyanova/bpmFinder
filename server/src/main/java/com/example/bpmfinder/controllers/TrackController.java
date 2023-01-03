@@ -18,7 +18,7 @@ import se.michaelthelin.spotify.model_objects.specification.Track;
 import java.util.List;
 
 @RestController
-@RequestMapping("/track")
+@RequestMapping("/tracks")
 @CrossOrigin("http://localhost:3000")
 public class TrackController {
 
