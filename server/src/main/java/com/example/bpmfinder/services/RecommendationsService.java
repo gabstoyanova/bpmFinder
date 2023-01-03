@@ -44,7 +44,7 @@ public class RecommendationsService {
       .min_time_signature(audioFeatures.getTimeSignature())
       .max_time_signature(audioFeatures.getTimeSignature())
 
-      .min_popularity(40)
+      .min_popularity(30)
       .build();
 
     Recommendations recommendations = spotifyService.executeRequest(getRecommendationsRequest);
